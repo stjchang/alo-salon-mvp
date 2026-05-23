@@ -1,4 +1,5 @@
 -- Seed data for ALO Hair Salon (Syosset, NY)
+-- Safe to re-run: staff_services and business_hours skip duplicates.
 
 insert into public.services (name, description, duration_minutes, buffer_minutes, price_display, sort_order) values
   ('Men''s Cut', 'Classic cut and style', 30, 10, '$35+', 1),
@@ -16,27 +17,29 @@ insert into public.staff (full_name, title, bio, sort_order) values
   ('Jordan Lee', 'Stylist', 'Great with men''s cuts and everyday styling.', 3),
   ('Sofia Chen', 'Master Stylist', 'Over 15 years of experience in cuts and color.', 4);
 
--- Link staff to services
+-- Link staff to services (single query — avoids duplicate Sofia Chen rows)
 insert into public.staff_services (staff_id, service_id)
-select s.id, sv.id
+select distinct s.id, sv.id
 from public.staff s
 cross join public.services sv
-where s.full_name in ('Alex Kim', 'Jordan Lee', 'Sofia Chen')
-  and sv.name in ('Men''s Cut', 'Women''s Cut', 'Blowout');
-
-insert into public.staff_services (staff_id, service_id)
-select s.id, sv.id
-from public.staff s
-cross join public.services sv
-where s.full_name in ('Maria Santos', 'Sofia Chen')
-  and sv.name in ('Single Process Color', 'Partial Highlights', 'Full Highlights', 'Balayage', 'Women''s Cut', 'Blowout');
-
-insert into public.staff_services (staff_id, service_id)
-select s.id, sv.id
-from public.staff s
-cross join public.services sv
-where s.full_name = 'Sofia Chen'
-  and sv.name = 'Keratin Treatment';
+where
+  (
+    s.full_name in ('Alex Kim', 'Jordan Lee', 'Sofia Chen')
+    and sv.name in ('Men''s Cut', 'Women''s Cut', 'Blowout')
+  )
+  or (
+    s.full_name in ('Maria Santos', 'Sofia Chen')
+    and sv.name in (
+      'Single Process Color',
+      'Partial Highlights',
+      'Full Highlights',
+      'Balayage',
+      'Women''s Cut',
+      'Blowout'
+    )
+  )
+  or (s.full_name = 'Sofia Chen' and sv.name = 'Keratin Treatment')
+on conflict (staff_id, service_id) do nothing;
 
 -- Business hours: Mon-Sat open, Sun closed (0=Sun, 1=Mon, ...)
 insert into public.business_hours (day_of_week, opens_at, closes_at, is_closed) values
@@ -46,4 +49,5 @@ insert into public.business_hours (day_of_week, opens_at, closes_at, is_closed) 
   (3, '09:00', '19:00', false),
   (4, '09:00', '20:00', false),
   (5, '09:00', '20:00', false),
-  (6, '09:00', '17:00', false);
+  (6, '09:00', '17:00', false)
+on conflict (day_of_week) do nothing;
