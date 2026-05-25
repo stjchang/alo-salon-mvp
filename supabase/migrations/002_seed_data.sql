@@ -13,7 +13,7 @@ insert into public.services (name, description, duration_minutes, buffer_minutes
   ('Perm', 'Body wave or straight perm', 150, 15, '$150+', 9);
 
 insert into public.staff (full_name, title, bio, sort_order) values
-  ('Alex Kim', 'Senior Stylist', 'Specializes in precision cuts and modern styles.', 1),
+  ('Vicky', 'Owner & Master Stylist', 'Precision cuts, color, perms, and Japanese straightening.', 1),
   ('Maria Santos', 'Color Specialist', 'Expert in balayage, highlights, and color correction.', 2),
   ('Jordan Lee', 'Stylist', 'Great with men''s cuts and everyday styling.', 3),
   ('Sofia Chen', 'Master Stylist', 'Over 15 years of experience in cuts and color.', 4);
@@ -25,7 +25,7 @@ from public.staff s
 cross join public.services sv
 where
   (
-    s.full_name in ('Alex Kim', 'Jordan Lee', 'Sofia Chen')
+    s.full_name in ('Vicky', 'Jordan Lee', 'Sofia Chen')
     and sv.name in ('Men''s Cut', 'Women''s Cut', 'Blowout')
   )
   or (

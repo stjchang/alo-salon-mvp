@@ -105,12 +105,12 @@ export const LANDING_SERVICES: LandingService[] = [
 
 export const LANDING_STAFF: LandingStaff[] = [
   {
-    id: "alex-kim",
-    seedName: "Alex Kim",
-    nameKey: "staff.alexKim.name",
-    titleKey: "staff.alexKim.title",
-    bioKey: "staff.alexKim.bio",
-    avatarUrl: images.staff.alexKim,
+    id: "vicky",
+    seedName: "Vicky",
+    nameKey: "staff.vicky.name",
+    titleKey: "staff.vicky.title",
+    bioKey: "staff.vicky.bio",
+    avatarUrl: images.staff.vicky,
   },
   {
     id: "maria-santos",

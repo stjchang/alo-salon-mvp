@@ -7,7 +7,7 @@ Drop image files here. They are served at `/images/...` in the app.
 | Folder | Purpose | Suggested files |
 |--------|---------|-----------------|
 | `hero/` | Landing page background | `hero.jpg` (1920×1080 or wider) |
-| `staff/` | Stylist headshots | `alex-kim.jpg`, `maria-santos.jpg`, etc. |
+| `staff/` | Stylist headshots | `vicky.jpg`, `maria-santos.jpg`, etc. |
 | `salon/` | Interior / branding | Optional gallery shots |
 
 ## Usage in code

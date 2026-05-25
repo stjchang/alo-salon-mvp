@@ -42,9 +42,10 @@ export const translations = {
     "stylists.title": "Meet our stylists",
     "stylists.subtitle": "Experienced artists who listen first, then create",
 
-    "staff.alexKim.name": "Alex Kim",
-    "staff.alexKim.title": "Senior Stylist",
-    "staff.alexKim.bio": "Specializes in precision cuts and modern styles.",
+    "staff.vicky.name": "Vicky",
+    "staff.vicky.title": "Owner & Master Stylist",
+    "staff.vicky.bio":
+      "Precision cuts, color, and perms.",
     "staff.mariaSantos.name": "Maria Santos",
     "staff.mariaSantos.title": "Color Specialist",
     "staff.mariaSantos.bio":
@@ -136,9 +137,10 @@ export const translations = {
     "stylists.title": "스타일리스트",
     "stylists.subtitle": "먼저 듣고, 그다음 완성하는 경험 많은 아티스트",
 
-    "staff.alexKim.name": "Alex Kim",
-    "staff.alexKim.title": "시니어 스타일리스트",
-    "staff.alexKim.bio": "정밀 커트와 모던 스타일 전문.",
+    "staff.vicky.name": "Vicky",
+    "staff.vicky.title": "오너 & 마스터 스타일리스트",
+    "staff.vicky.bio":
+      "정밀 커트, 컬러, 펌, 일본식 스트레이트 전문.",
     "staff.mariaSantos.name": "Maria Santos",
     "staff.mariaSantos.title": "컬러 스페셜리스트",
     "staff.mariaSantos.bio": "발레아쥬, 하이라이트, 컬러 교정 전문.",

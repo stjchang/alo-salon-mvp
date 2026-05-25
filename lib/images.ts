@@ -3,7 +3,7 @@
 export const images = {
   hero: "/images/hero/hero.jpg",
   staff: {
-    alexKim: "/images/staff/alex-kim.jpg",
+    vicky: "/images/staff/vicky.jpg",
     mariaSantos: "/images/staff/maria-santos.jpg",
     jordanLee: "/images/staff/jordan-lee.jpg",
     sofiaChen: "/images/staff/sofia-chen.jpg",

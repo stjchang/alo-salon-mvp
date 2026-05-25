@@ -74,7 +74,7 @@ Required env vars: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
 ```sql
 update public.staff
 set google_calendar_id = 'stylist-calendar-id@group.calendar.google.com'
-where full_name = 'Alex Kim';
+where full_name = 'Vicky';
 ```
 
 If Google Calendar env vars are missing, booking still works using **database hours + appointments only**.
