@@ -43,7 +43,8 @@ function Calendar({
           date.toLocaleString(locale?.code, { month: "short" }),
         ...formatters,
       }}
-      classNames={{
+      classNames={
+        {
         root: cn("w-fit", defaultClassNames.root),
         months: cn(
           "relative flex flex-col gap-4 md:flex-row",
@@ -132,7 +133,7 @@ function Calendar({
         ),
         hidden: cn("invisible", defaultClassNames.hidden),
         ...classNames,
-      }}
+      } as React.ComponentProps<typeof DayPicker>["classNames"]}
       components={{
         Root: ({ className, rootRef, ...props }) => {
           return (
