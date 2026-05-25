@@ -9,7 +9,8 @@ insert into public.services (name, description, duration_minutes, buffer_minutes
   ('Partial Highlights', 'Partial foil highlights', 120, 15, '$120+', 5),
   ('Full Highlights', 'Full foil highlights', 150, 15, '$165+', 6),
   ('Balayage', 'Hand-painted color technique', 180, 15, '$200+', 7),
-  ('Keratin Treatment', 'Smoothing keratin treatment', 120, 15, '$250+', 8);
+  ('Keratin Treatment', 'Smoothing keratin treatment', 120, 15, '$250+', 8),
+  ('Perm', 'Body wave or straight perm', 150, 15, '$150+', 9);
 
 insert into public.staff (full_name, title, bio, sort_order) values
   ('Alex Kim', 'Senior Stylist', 'Specializes in precision cuts and modern styles.', 1),
@@ -39,6 +40,10 @@ where
     )
   )
   or (s.full_name = 'Sofia Chen' and sv.name = 'Keratin Treatment')
+  or (
+    s.full_name in ('Maria Santos', 'Sofia Chen')
+    and sv.name = 'Perm'
+  )
 on conflict (staff_id, service_id) do nothing;
 
 -- Business hours: Mon-Sat open, Sun closed (0=Sun, 1=Mon, ...)

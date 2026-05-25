@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
+import { resolvePreselectedServiceId } from "@/lib/booking/resolve-service";
 import { cn } from "@/lib/utils";
 
 type Service = {
@@ -37,7 +38,15 @@ type StaffRow = StaffMember & { is_active?: boolean; sort_order?: number };
 
 const STEPS = ["Service", "Stylist", "Date & time", "Your details"] as const;
 
-export function BookingWizard() {
+type BookingWizardProps = {
+  initialServiceId?: string;
+  onSuccess?: () => void;
+};
+
+export function BookingWizard({
+  initialServiceId,
+  onSuccess,
+}: BookingWizardProps = {}) {
   const supabase = useMemo(() => {
     if (typeof window === "undefined") return null;
     try {
@@ -47,7 +56,8 @@ export function BookingWizard() {
     }
   }, []);
 
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(initialServiceId ? 1 : 0);
+  const [initialApplied, setInitialApplied] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [slots, setSlots] = useState<string[]>([]);
@@ -77,6 +87,18 @@ export function BookingWizard() {
       setServices(data ?? []);
     })().catch(console.error);
   }, [supabase]);
+
+  useEffect(() => {
+    if (!initialServiceId || initialApplied || services.length === 0) return;
+
+    const resolved = resolvePreselectedServiceId(initialServiceId, services);
+    if (resolved) {
+      setServiceId(resolved);
+      setStaffId(null);
+      setStep(1);
+    }
+    setInitialApplied(true);
+  }, [initialServiceId, initialApplied, services]);
 
   const loadStaffForService = useCallback(
     async (selectedServiceId: string) => {
@@ -166,6 +188,7 @@ export function BookingWizard() {
         throw new Error(data.error ?? "Booking failed");
       }
       setSuccess(true);
+      onSuccess?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Booking failed");
     } finally {
