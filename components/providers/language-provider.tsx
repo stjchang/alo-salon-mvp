@@ -6,7 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import {
@@ -25,29 +25,43 @@ type LanguageContextValue = {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
-  const [hydrated, setHydrated] = useState(false);
+const localeListeners = new Set<() => void>();
 
-  useEffect(() => {
-    const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
-    if (stored === "en" || stored === "ko") {
-      setLocaleState(stored);
-    }
-    setHydrated(true);
-  }, []);
+function subscribeLocale(onStoreChange: () => void) {
+  localeListeners.add(onStoreChange);
+  return () => localeListeners.delete(onStoreChange);
+}
+
+function notifyLocaleChange() {
+  localeListeners.forEach((listener) => listener());
+}
+
+function readStoredLocale(): Locale {
+  const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
+  if (stored === "en" || stored === "ko") return stored;
+  return "en";
+}
+
+function getServerLocale(): Locale {
+  return "en";
+}
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const locale = useSyncExternalStore(
+    subscribeLocale,
+    readStoredLocale,
+    getServerLocale
+  );
 
   const setLocale = useCallback((next: Locale) => {
-    setLocaleState(next);
     localStorage.setItem(LOCALE_STORAGE_KEY, next);
     document.documentElement.lang = next;
+    notifyLocaleChange();
   }, []);
 
   useEffect(() => {
-    if (hydrated) {
-      document.documentElement.lang = locale;
-    }
-  }, [locale, hydrated]);
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   const t = useCallback(
     (key: TranslationKey, params?: Record<string, string | number>) =>

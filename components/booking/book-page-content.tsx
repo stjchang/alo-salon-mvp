@@ -7,7 +7,11 @@ import { useLanguage } from "@/components/providers/language-provider";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export function BookPageContent() {
+type BookPageContentProps = {
+  initialServiceId?: string;
+};
+
+export function BookPageContent({ initialServiceId }: BookPageContentProps) {
   const { t } = useLanguage();
 
   return (
@@ -21,7 +25,7 @@ export function BookPageContent() {
           </h1>
           <p className="mt-2 text-muted-foreground">{t("book.page.subtitle")}</p>
         </div>
-        <BookingWizard />
+        <BookingWizard initialServiceId={initialServiceId} />
         <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-muted-foreground">
           {t("book.page.cancelHint")}{" "}
           <Link

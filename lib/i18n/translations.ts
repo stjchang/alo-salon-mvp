@@ -79,16 +79,23 @@ export const translations = {
     "footer.location": "Location",
     "footer.hours": "Hours",
     "footer.contact": "Contact",
-    "footer.hoursLine1": "Mon–Wed: 9:00 AM – 7:00 PM",
-    "footer.hoursLine2": "Thu–Fri: 9:00 AM – 8:00 PM",
-    "footer.hoursLine3": "Sat: 9:00 AM – 5:00 PM",
-    "footer.hoursLine4": "Sun: Closed",
+    "footer.hoursLine1": "Monday: Closed",
+    "footer.hoursLine2": "Tuesday: 9:30 AM - 7:00 PM",
+    "footer.hoursLine3": "Wednesday: 9:30 AM - 7:00 PM",
+    "footer.hoursLine4": "Thursday: 9:30 AM - 7:00 PM",
+    "footer.hoursLine5": "Friday: 9:30 AM - 7:00 PM",
+    "footer.hoursLine6": "Saturday: 9:30 AM - 7:00 PM",
+    "footer.hoursLine7": "Sunday: Closed",
     "footer.mapsAria": "Map of salon location",
+    "footer.instagramAria": "Follow ALO Hair Salon on Instagram",
     "footer.copyright": "© {year} ALO Hair Salon. All rights reserved.",
 
     "booking.dialog.title": "Book your appointment",
     "booking.dialog.description":
       "Choose your stylist and time — we'll email a confirmation with a cancel link.",
+    "booking.anyStylist.title": "Any Available Stylist",
+    "booking.anyStylist.subtitle":
+      "We'll assign the first available stylist for your time",
 
     "book.page.title": "Book your appointment",
     "book.page.subtitle": "No account needed — four quick steps.",
@@ -173,16 +180,25 @@ export const translations = {
     "footer.location": "위치",
     "footer.hours": "영업시간",
     "footer.contact": "연락처",
-    "footer.hoursLine1": "월–수: 오전 9시 – 오후 7시",
-    "footer.hoursLine2": "목–금: 오전 9시 – 오후 8시",
-    "footer.hoursLine3": "토: 오전 9시 – 오후 5시",
-    "footer.hoursLine4": "일: 휴무",
+    "footer.hoursLine1": "월요일: 휴무",
+    "footer.hoursLine2": "화–토: 오전 9:30 – 오후 7:00",
+    "footer.hoursLine3": "수요일: 오전 9:30 – 오후 7:00",
+    "footer.hoursLine4": "목요일: 오전 9:30 – 오후 7:00",
+    "footer.hoursLine5": "금요일: 오전 9:30 – 오후 7:00",
+    "footer.hoursLine6": "토요일: 오전 9:30 – 오후 7:00",
+    "footer.hoursLine7": "일요일: 휴무",
+  
+  
     "footer.mapsAria": "살롱 위치 지도",
+    "footer.instagramAria": "ALO 헤어살롱 인스타그램",
     "footer.copyright": "© {year} ALO 헤어살롱. All rights reserved.",
 
     "booking.dialog.title": "예약하기",
     "booking.dialog.description":
       "스타일리스트와 시간을 선택하세요 — 확인 이메일에 취소 링크가 포함됩니다.",
+    "booking.anyStylist.title": "가능한 스타일리스트",
+    "booking.anyStylist.subtitle":
+      "선택하신 시간에 가능한 스타일리스트를 배정해 드립니다",
 
     "book.page.title": "예약하기",
     "book.page.subtitle": "회원가입 없이 4단계로 완료.",
@@ -193,6 +209,16 @@ export const translations = {
 } as const;
 
 export type TranslationKey = keyof (typeof translations)["en"];
+
+export const FOOTER_HOURS_KEYS = [
+  "footer.hoursLine1",
+  "footer.hoursLine2",
+  "footer.hoursLine3",
+  "footer.hoursLine4",
+  "footer.hoursLine5",
+  "footer.hoursLine6",
+  "footer.hoursLine7",
+] as const satisfies readonly TranslationKey[];
 
 export function translate(
   locale: Locale,

@@ -11,6 +11,7 @@ export function LanguageToggle({ className }: { className?: string }) {
       className={cn("flex items-center gap-1 text-sm", className)}
       role="group"
       aria-label={t("lang.toggleAria")}
+      suppressHydrationWarning
     >
       <button
         type="button"

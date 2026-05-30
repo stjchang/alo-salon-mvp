@@ -42,7 +42,7 @@ export async function sendBookingConfirmation(
       <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
         <h1 style="font-size: 24px;">You're booked!</h1>
         <p>Hi ${input.customerName},</p>
-        <p>Your appointment at <strong>ALO Hair Salon</strong> in Syosset is confirmed.</p>
+        <p>Your appointment with <strong>${input.stylistName}</strong> is confirmed at <strong>ALO Hair Salon</strong> in Syosset.</p>
         <ul>
           <li><strong>Service:</strong> ${input.serviceName}</li>
           <li><strong>Stylist:</strong> ${input.stylistName}</li>

@@ -18,5 +18,6 @@ export const salonContact = {
   phoneTel: "+15165889280",
   email: "info@alohairsyosset.com",
   mapsEmbedUrl:
-    "https://maps.google.com/maps?q=51+Berry+Hill+Rd,+Syosset,+NY+11791&output=embed",
+    "https://maps.google.com/maps?q=Alo+Hair+Salon,+Syosset,+NY+11791&output=embed",
+  instagramUrl: "https://www.instagram.com/alo_hair2020/",
 } as const;

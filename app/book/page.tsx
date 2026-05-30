@@ -1,5 +1,10 @@
 import { BookPageContent } from "@/components/booking/book-page-content";
 
-export default function BookPage() {
-  return <BookPageContent />;
+type BookPageProps = {
+  searchParams: Promise<{ service?: string }>;
+};
+
+export default async function BookPage({ searchParams }: BookPageProps) {
+  const { service } = await searchParams;
+  return <BookPageContent initialServiceId={service} />;
 }

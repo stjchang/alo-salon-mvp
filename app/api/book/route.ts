@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { bookingSchema } from "@/lib/validators/booking";
 import { createServiceClient } from "@/lib/supabase/server";
 import { generateCancelToken, hashCancelToken } from "@/lib/booking/tokens";
-import { assertSlotAvailable } from "@/lib/booking/availability";
+import {
+  assertSlotAvailable,
+  resolveStaffForAnyBooking,
+} from "@/lib/booking/availability";
 import { createCalendarEvent } from "@/lib/google/calendar";
 import { sendBookingConfirmation } from "@/lib/email/resend";
 
@@ -27,7 +30,23 @@ export async function POST(request: Request) {
       startsAt.getTime() + service.duration_minutes * 60_000
     );
 
-    await assertSlotAvailable(body.staffId, body.serviceId, startsAt);
+    let resolvedStaffId = body.staffId;
+
+    if (body.staffId === "any") {
+      const resolved = await resolveStaffForAnyBooking(
+        body.serviceId,
+        startsAt
+      );
+      if (!resolved) {
+        return NextResponse.json(
+          { error: "Selected time slot is no longer available" },
+          { status: 409 }
+        );
+      }
+      resolvedStaffId = resolved.staffId;
+    }
+
+    await assertSlotAvailable(resolvedStaffId, body.serviceId, startsAt);
 
     const rawToken = generateCancelToken();
     const cancelTokenHash = hashCancelToken(rawToken);
@@ -56,7 +75,7 @@ export async function POST(request: Request) {
       .from("appointments")
       .insert({
         customer_id: customer.id,
-        staff_id: body.staffId,
+        staff_id: resolvedStaffId,
         service_id: body.serviceId,
         starts_at: startsAt.toISOString(),
         ends_at: endsAt.toISOString(),
@@ -81,7 +100,7 @@ export async function POST(request: Request) {
     const { data: staff } = await supabase
       .from("staff")
       .select("full_name, google_calendar_id")
-      .eq("id", body.staffId)
+      .eq("id", resolvedStaffId)
       .single();
 
     if (staff?.google_calendar_id) {
@@ -108,13 +127,14 @@ export async function POST(request: Request) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const cancelUrl = `${appUrl}/cancel/${rawToken}`;
+    const stylistName = staff?.full_name ?? "Your stylist";
 
     try {
       await sendBookingConfirmation({
         to: body.email,
         customerName: body.fullName,
         serviceName: service.name,
-        stylistName: staff?.full_name ?? "Your stylist",
+        stylistName,
         startsAt,
         cancelUrl,
       });
@@ -122,7 +142,10 @@ export async function POST(request: Request) {
       console.error("Resend confirmation failed:", error);
     }
 
-    return NextResponse.json({ appointmentId: appointment.id }, { status: 201 });
+    return NextResponse.json(
+      { appointmentId: appointment.id, stylistName },
+      { status: 201 }
+    );
   } catch (error) {
     if (error instanceof Error && error.name === "ZodError") {
       return NextResponse.json({ error: "Invalid booking data" }, { status: 400 });

@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { format } from "date-fns";
 import Link from "next/link";
+import { Users } from "lucide-react";
 import { createBrowserClient } from "@/lib/supabase/browser";
 import { formatSlotLabel } from "@/lib/booking/slots";
 import { unwrapRelation } from "@/lib/supabase/relations";
+import { useLanguage } from "@/components/providers/language-provider";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -36,6 +38,8 @@ type StaffMember = {
 
 type StaffRow = StaffMember & { is_active?: boolean; sort_order?: number };
 
+type StaffSelection = string | "any";
+
 const STEPS = ["Service", "Stylist", "Date & time", "Your details"] as const;
 
 type BookingWizardProps = {
@@ -47,12 +51,24 @@ export function BookingWizard({
   initialServiceId,
   onSuccess,
 }: BookingWizardProps = {}) {
-  const supabase = useMemo(() => {
-    if (typeof window === "undefined") return null;
+  const { t } = useLanguage();
+  const [supabase, setSupabase] = useState<ReturnType<
+    typeof createBrowserClient
+  > | null>(null);
+  const [supabaseReady, setSupabaseReady] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
+
+  useEffect(() => {
     try {
-      return createBrowserClient();
-    } catch {
-      return null;
+      setSupabase(createBrowserClient());
+      setConfigError(null);
+    } catch (e) {
+      setSupabase(null);
+      setConfigError(
+        e instanceof Error ? e.message : "Supabase configuration error"
+      );
+    } finally {
+      setSupabaseReady(true);
     }
   }, []);
 
@@ -63,9 +79,12 @@ export function BookingWizard({
   const [slots, setSlots] = useState<string[]>([]);
 
   const [serviceId, setServiceId] = useState<string | null>(null);
-  const [staffId, setStaffId] = useState<string | null>(null);
+  const [staffId, setStaffId] = useState<StaffSelection | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [startsAt, setStartsAt] = useState<string | null>(null);
+  const [confirmedStylistName, setConfirmedStylistName] = useState<
+    string | null
+  >(null);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -163,6 +182,11 @@ export function BookingWizard({
   const selectedService = services.find((s) => s.id === serviceId);
   const selectedStaff = staff.find((s) => s.id === staffId);
 
+  const stylistDisplayName =
+    staffId === "any"
+      ? t("booking.anyStylist.title")
+      : (selectedStaff?.full_name ?? confirmedStylistName ?? "");
+
   async function handleSubmit() {
     if (!serviceId || !staffId || !startsAt) return;
 
@@ -187,6 +211,9 @@ export function BookingWizard({
       if (!res.ok) {
         throw new Error(data.error ?? "Booking failed");
       }
+      if (typeof data.stylistName === "string") {
+        setConfirmedStylistName(data.stylistName);
+      }
       setSuccess(true);
       onSuccess?.();
     } catch (e) {
@@ -196,12 +223,23 @@ export function BookingWizard({
     }
   }
 
+  if (!supabaseReady) {
+    return (
+      <p className="text-center text-sm text-muted-foreground">Loading…</p>
+    );
+  }
+
   if (!supabase) {
     return (
-      <p className="text-center text-sm text-muted-foreground">
-        Configure Supabase in <code className="text-xs">.env.local</code> to
-        enable booking.
-      </p>
+      <div className="space-y-2 text-center text-sm text-muted-foreground">
+        <p>
+          Configure Supabase in <code className="text-xs">.env.local</code> to
+          enable booking.
+        </p>
+        {configError ? (
+          <p className="text-xs text-destructive">{configError}</p>
+        ) : null}
+      </div>
     );
   }
 
@@ -221,7 +259,8 @@ export function BookingWizard({
               <strong>Service:</strong> {selectedService?.name}
             </li>
             <li>
-              <strong>Stylist:</strong> {selectedStaff?.full_name}
+              <strong>Stylist:</strong>{" "}
+              {confirmedStylistName ?? stylistDisplayName}
             </li>
             <li>
               <strong>Time:</strong>{" "}
@@ -320,28 +359,54 @@ export function BookingWizard({
                 No stylists available for this service.
               </p>
             ) : (
-              staff.map((member) => (
+              <>
                 <button
-                  key={member.id}
                   type="button"
                   onClick={() => {
-                    setStaffId(member.id);
+                    setStaffId("any");
                     setStep(2);
                   }}
                   className={cn(
                     "rounded-lg border p-4 text-left transition-colors hover:bg-accent",
-                    staffId === member.id &&
+                    staffId === "any" &&
                       "border-primary ring-2 ring-primary/20"
                   )}
                 >
-                  <span className="font-medium">{member.full_name}</span>
-                  {member.title && (
-                    <p className="text-sm text-muted-foreground">
-                      {member.title}
-                    </p>
-                  )}
+                  <div className="flex items-start gap-3">
+                    <Users className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+                    <div>
+                      <span className="font-medium">
+                        {t("booking.anyStylist.title")}
+                      </span>
+                      <p className="text-sm text-muted-foreground">
+                        {t("booking.anyStylist.subtitle")}
+                      </p>
+                    </div>
+                  </div>
                 </button>
-              ))
+                {staff.map((member) => (
+                  <button
+                    key={member.id}
+                    type="button"
+                    onClick={() => {
+                      setStaffId(member.id);
+                      setStep(2);
+                    }}
+                    className={cn(
+                      "rounded-lg border p-4 text-left transition-colors hover:bg-accent",
+                      staffId === member.id &&
+                        "border-primary ring-2 ring-primary/20"
+                    )}
+                  >
+                    <span className="font-medium">{member.full_name}</span>
+                    {member.title && (
+                      <p className="text-sm text-muted-foreground">
+                        {member.title}
+                      </p>
+                    )}
+                  </button>
+                ))}
+              </>
             )}
             <Button variant="outline" onClick={() => setStep(0)}>
               Back
@@ -354,7 +419,7 @@ export function BookingWizard({
         <Card>
           <CardHeader>
             <CardTitle>Pick a date & time</CardTitle>
-            <CardDescription>With {selectedStaff?.full_name}</CardDescription>
+            <CardDescription>With {stylistDisplayName}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <Calendar
@@ -412,7 +477,7 @@ export function BookingWizard({
           <CardHeader>
             <CardTitle>Your details</CardTitle>
             <CardDescription>
-              {selectedService?.name} with {selectedStaff?.full_name} on{" "}
+              {selectedService?.name} with {stylistDisplayName} on{" "}
               {startsAt && formatSlotLabel(new Date(startsAt))}
             </CardDescription>
           </CardHeader>

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
-import { BookingDialog } from "@/components/booking/booking-dialog";
+import Link from "next/link";
+import type { CSSProperties } from "react";
 import { SiteHeader } from "@/components/landing/site-header";
 import { useLanguage } from "@/components/providers/language-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -26,7 +26,9 @@ import {
   LANDING_STAFF,
   LANDING_TESTIMONIALS,
 } from "@/lib/landing-data";
+import { FOOTER_HOURS_KEYS } from "@/lib/i18n/translations";
 import { images, salonContact } from "@/lib/images";
+import { cn } from "@/lib/utils";
 
 const HERO_FALLBACK =
   "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1920&q=80&auto=format&fit=crop";
@@ -41,15 +43,6 @@ function heroBackgroundStyle(): CSSProperties {
 
 export function LandingPage() {
   const { t } = useLanguage();
-  const [bookingOpen, setBookingOpen] = useState(false);
-  const [preselectedServiceId, setPreselectedServiceId] = useState<
-    string | undefined
-  >();
-
-  function openBooking(serviceMockId?: string) {
-    setPreselectedServiceId(serviceMockId);
-    setBookingOpen(true);
-  }
 
   return (
     <div className="flex min-h-full flex-col">
@@ -74,13 +67,15 @@ export function LandingPage() {
           <p className="mt-4 max-w-xl text-lg text-white/90 sm:text-xl">
             {t("hero.subtitle")}
           </p>
-          <Button
-            size="lg"
-            className="mt-8 min-h-12 min-w-[220px] text-base"
-            onClick={() => openBooking()}
+          <Link
+            href="/book"
+            className={cn(
+              buttonVariants({ size: "lg" }),
+              "mt-8 min-h-12 min-w-[220px] text-base"
+            )}
           >
             {t("hero.cta")}
-          </Button>
+          </Link>
         </section>
 
         {/* Services */}
@@ -119,12 +114,15 @@ export function LandingPage() {
                       {service.priceDisplay}
                     </span>
                   </div>
-                  <Button
-                    className="min-h-11 w-full"
-                    onClick={() => openBooking(service.mockId)}
+                  <Link
+                    href={`/book?service=${service.mockId}`}
+                    className={cn(
+                      buttonVariants(),
+                      "min-h-11 w-full"
+                    )}
                   >
                     {t("services.select")}
-                  </Button>
+                  </Link>
                 </CardContent>
               </Card>
             ))}
@@ -271,10 +269,9 @@ export function LandingPage() {
               {t("footer.hours")}
             </h3>
             <ul className="space-y-1 text-sm">
-              <li>{t("footer.hoursLine1")}</li>
-              <li>{t("footer.hoursLine2")}</li>
-              <li>{t("footer.hoursLine3")}</li>
-              <li>{t("footer.hoursLine4")}</li>
+              {FOOTER_HOURS_KEYS.map((key) => (
+                <li key={key}>{t(key)}</li>
+              ))}
             </ul>
           </div>
 
@@ -299,21 +296,43 @@ export function LandingPage() {
                   {salonContact.email}
                 </a>
               </li>
+              <li>
+                <a
+                  href={salonContact.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={t("footer.instagramAria")}
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-slate-100 transition-colors hover:bg-slate-800 hover:text-white"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="size-6"
+                    aria-hidden
+                  >
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                  </svg>
+                </a>
+              </li>
             </ul>
           </div>
         </div>
 
         <Separator className="bg-slate-700" />
-        <p className="px-4 py-6 text-center text-xs text-slate-400">
+        <p
+          className="px-4 py-6 text-center text-xs text-slate-400"
+          suppressHydrationWarning
+        >
           {t("footer.copyright", { year: new Date().getFullYear() })}
         </p>
       </footer>
-
-      <BookingDialog
-        open={bookingOpen}
-        onOpenChange={setBookingOpen}
-        preselectedServiceId={preselectedServiceId}
-      />
     </div>
   );
 }
