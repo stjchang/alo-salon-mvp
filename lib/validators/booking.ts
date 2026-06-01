@@ -9,6 +9,7 @@ export const bookingSchema = z.object({
   fullName: z.string().min(2).max(100),
   email: z.string().email(),
   phone: z.string().min(7).max(20),
+  turnstileToken: z.string().min(1).optional(),
 });
 
 export type BookingInput = z.infer<typeof bookingSchema>;

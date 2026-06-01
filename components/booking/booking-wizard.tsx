@@ -20,6 +20,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { resolvePreselectedServiceId } from "@/lib/booking/resolve-service";
+import {
+  isTurnstileConfigured,
+  TurnstileWidget,
+} from "@/components/booking/turnstile-widget";
 import { cn } from "@/lib/utils";
 
 type Service = {
@@ -89,6 +93,9 @@ export function BookingWizard({
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const turnstileRequired = isTurnstileConfigured();
 
   const [loading, setLoading] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -189,6 +196,10 @@ export function BookingWizard({
 
   async function handleSubmit() {
     if (!serviceId || !staffId || !startsAt) return;
+    if (turnstileRequired && !turnstileToken) {
+      setError("Please complete the security check before booking.");
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -204,11 +215,16 @@ export function BookingWizard({
           fullName,
           email,
           phone,
+          ...(turnstileToken ? { turnstileToken } : {}),
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 400 || res.status === 429) {
+          setTurnstileToken(null);
+          setTurnstileResetKey((key) => key + 1);
+        }
         throw new Error(data.error ?? "Booking failed");
       }
       if (typeof data.stylistName === "string") {
@@ -515,13 +531,24 @@ export function BookingWizard({
               />
             </div>
 
+            {turnstileRequired && (
+              <TurnstileWidget
+                key={turnstileResetKey}
+                onToken={setTurnstileToken}
+              />
+            )}
+
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep(2)}>
                 Back
               </Button>
               <Button
                 disabled={
-                  loading || !fullName.trim() || !email.trim() || !phone.trim()
+                  loading ||
+                  !fullName.trim() ||
+                  !email.trim() ||
+                  !phone.trim() ||
+                  (turnstileRequired && !turnstileToken)
                 }
                 onClick={handleSubmit}
               >
