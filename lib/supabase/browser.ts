@@ -1,4 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+let browserClient: SupabaseClient | null = null;
 
 function assertSupabaseUrl(url: string): void {
   if (url.startsWith("sb_")) {
@@ -19,6 +21,10 @@ function assertSupabaseUrl(url: string): void {
 }
 
 export function createBrowserClient() {
+  if (browserClient) {
+    return browserClient;
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
@@ -30,5 +36,6 @@ export function createBrowserClient() {
 
   assertSupabaseUrl(url);
 
-  return createClient(url, key);
+  browserClient = createClient(url, key);
+  return browserClient;
 }

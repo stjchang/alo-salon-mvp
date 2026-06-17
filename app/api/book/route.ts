@@ -8,10 +8,51 @@ import {
 } from "@/lib/booking/availability";
 import { createCalendarEvent } from "@/lib/google/calendar";
 import { sendBookingConfirmation } from "@/lib/email/resend";
+import { getClientIp } from "@/lib/security/client-ip";
+import { isBookingRateLimited } from "@/lib/security/rate-limit";
+import {
+  isTurnstileEnabled,
+  verifyTurnstileToken,
+} from "@/lib/security/turnstile";
 
 export async function POST(request: Request) {
   try {
     const body = bookingSchema.parse(await request.json());
+    const clientIp = getClientIp(request);
+
+    if (isTurnstileEnabled()) {
+      if (!body.turnstileToken) {
+        return NextResponse.json(
+          { error: "Security verification required" },
+          { status: 400 }
+        );
+      }
+
+      const turnstileValid = await verifyTurnstileToken(
+        body.turnstileToken,
+        clientIp
+      );
+      if (!turnstileValid) {
+        return NextResponse.json(
+          { error: "Security verification failed. Please try again." },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (clientIp) {
+      const rateLimited = await isBookingRateLimited(clientIp);
+      if (rateLimited) {
+        return NextResponse.json(
+          {
+            error:
+              "Too many bookings from this network. You can book up to 2 appointments per day.",
+          },
+          { status: 429 }
+        );
+      }
+    }
+
     const supabase = createServiceClient();
 
     const { data: service, error: serviceError } = await supabase
@@ -81,6 +122,7 @@ export async function POST(request: Request) {
         ends_at: endsAt.toISOString(),
         cancel_token_hash: cancelTokenHash,
         cancel_token_expires_at: startsAt.toISOString(),
+        ...(clientIp ? { client_ip: clientIp } : {}),
       })
       .select("id")
       .single();

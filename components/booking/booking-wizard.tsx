@@ -19,20 +19,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
+import type { BookingService } from "@/lib/booking/fetch-services";
 import { resolvePreselectedServiceId } from "@/lib/booking/resolve-service";
 import {
   isTurnstileConfigured,
   TurnstileWidget,
 } from "@/components/booking/turnstile-widget";
 import { cn } from "@/lib/utils";
-
-type Service = {
-  id: string;
-  name: string;
-  description: string | null;
-  duration_minutes: number;
-  price_display: string | null;
-};
 
 type StaffMember = {
   id: string;
@@ -48,11 +41,13 @@ const STEPS = ["Service", "Stylist", "Date & time", "Your details"] as const;
 
 type BookingWizardProps = {
   initialServiceId?: string;
+  initialServices?: BookingService[];
   onSuccess?: () => void;
 };
 
 export function BookingWizard({
   initialServiceId,
+  initialServices = [],
   onSuccess,
 }: BookingWizardProps = {}) {
   const { t } = useLanguage();
@@ -76,9 +71,13 @@ export function BookingWizard({
     }
   }, []);
 
-  const [step, setStep] = useState(initialServiceId ? 1 : 0);
-  const [initialApplied, setInitialApplied] = useState(false);
-  const [services, setServices] = useState<Service[]>([]);
+  const [step, setStep] = useState(0);
+  const [initialApplied, setInitialApplied] = useState(!initialServiceId);
+  const [loadingServices, setLoadingServices] = useState(
+    initialServices.length === 0
+  );
+  const [loadingStaff, setLoadingStaff] = useState(false);
+  const [services, setServices] = useState<BookingService[]>(initialServices);
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [slots, setSlots] = useState<string[]>([]);
 
@@ -103,16 +102,32 @@ export function BookingWizard({
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase || initialServices.length > 0) return;
+    setLoadingServices(true);
     void (async () => {
-      const { data } = await supabase
-        .from("services")
-        .select("id, name, description, duration_minutes, price_display")
-        .eq("is_active", true)
-        .order("sort_order");
-      setServices(data ?? []);
-    })().catch(console.error);
-  }, [supabase]);
+      try {
+        const { data, error } = await supabase
+          .from("services")
+          .select("id, name, description, duration_minutes, price_display")
+          .eq("is_active", true)
+          .order("sort_order");
+        if (error) {
+          throw error;
+        }
+        setServices(data ?? []);
+      } catch (e) {
+        console.error(e);
+        setError(
+          e instanceof Error
+            ? e.message
+            : "Failed to load services. Please refresh the page."
+        );
+        setServices([]);
+      } finally {
+        setLoadingServices(false);
+      }
+    })();
+  }, [supabase, initialServices.length]);
 
   useEffect(() => {
     if (!initialServiceId || initialApplied || services.length === 0) return;
@@ -129,19 +144,27 @@ export function BookingWizard({
   const loadStaffForService = useCallback(
     async (selectedServiceId: string) => {
       if (!supabase) return;
-      const { data } = await supabase
-        .from("staff_services")
-        .select("staff:staff_id ( id, full_name, title, is_active, sort_order )")
-        .eq("service_id", selectedServiceId);
+      setLoadingStaff(true);
+      try {
+        const { data } = await supabase
+          .from("staff_services")
+          .select("staff:staff_id ( id, full_name, title, is_active, sort_order )")
+          .eq("service_id", selectedServiceId);
 
-      const members: StaffMember[] =
-        data
-          ?.map((row) => unwrapRelation(row.staff) as StaffRow | null)
-          .filter((s): s is StaffRow => Boolean(s && s.is_active !== false))
-          .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-          .map(({ id, full_name, title }) => ({ id, full_name, title })) ?? [];
+        const members: StaffMember[] =
+          data
+            ?.map((row) => unwrapRelation(row.staff) as StaffRow | null)
+            .filter((s): s is StaffRow => Boolean(s && s.is_active !== false))
+            .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+            .map(({ id, full_name, title }) => ({ id, full_name, title })) ?? [];
 
-      setStaff(members);
+        setStaff(members);
+      } catch (e) {
+        console.error(e);
+        setStaff([]);
+      } finally {
+        setLoadingStaff(false);
+      }
     },
     [supabase]
   );
@@ -188,6 +211,8 @@ export function BookingWizard({
 
   const selectedService = services.find((s) => s.id === serviceId);
   const selectedStaff = staff.find((s) => s.id === staffId);
+  const stepContentLoading =
+    loadingServices || (Boolean(initialServiceId) && !initialApplied);
 
   const stylistDisplayName =
     staffId === "any"
@@ -317,13 +342,22 @@ export function BookingWizard({
         </p>
       )}
 
-      {step === 0 && (
+      {stepContentLoading && (
+        <p className="text-center text-sm text-muted-foreground">Loading…</p>
+      )}
+
+      {step === 0 && !stepContentLoading && (
         <Card>
           <CardHeader>
             <CardTitle>Choose a service</CardTitle>
             <CardDescription>Select what you&apos;d like to book</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
+            {services.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No services are available right now. Please try again later.
+              </p>
+            ) : null}
             {services.map((service) => (
               <button
                 key={service.id}
@@ -361,7 +395,7 @@ export function BookingWizard({
         </Card>
       )}
 
-      {step === 1 && (
+      {step === 1 && !stepContentLoading && (
         <Card>
           <CardHeader>
             <CardTitle>Choose your stylist</CardTitle>
@@ -370,7 +404,9 @@ export function BookingWizard({
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
-            {staff.length === 0 ? (
+            {loadingStaff ? (
+              <p className="text-sm text-muted-foreground">Loading stylists…</p>
+            ) : staff.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 No stylists available for this service.
               </p>

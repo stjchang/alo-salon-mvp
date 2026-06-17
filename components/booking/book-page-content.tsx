@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { BookingWizard } from "@/components/booking/booking-wizard";
+import type { BookingService } from "@/lib/booking/fetch-services";
 import { SiteHeader } from "@/components/landing/site-header";
 import { useLanguage } from "@/components/providers/language-provider";
 import { buttonVariants } from "@/components/ui/button";
@@ -9,9 +10,13 @@ import { cn } from "@/lib/utils";
 
 type BookPageContentProps = {
   initialServiceId?: string;
+  initialServices?: BookingService[];
 };
 
-export function BookPageContent({ initialServiceId }: BookPageContentProps) {
+export function BookPageContent({
+  initialServiceId,
+  initialServices = [],
+}: BookPageContentProps) {
   const { t } = useLanguage();
 
   return (
@@ -25,7 +30,10 @@ export function BookPageContent({ initialServiceId }: BookPageContentProps) {
           </h1>
           <p className="mt-2 text-muted-foreground">{t("book.page.subtitle")}</p>
         </div>
-        <BookingWizard initialServiceId={initialServiceId} />
+        <BookingWizard
+          initialServiceId={initialServiceId}
+          initialServices={initialServices}
+        />
         <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-muted-foreground">
           {t("book.page.cancelHint")}{" "}
           <Link
